@@ -1,0 +1,10 @@
+---
+kind: pipeline
+name: test
+
+steps:
+  - name: go-test
+    image: sundaeparty/devcontainer:latest
+    commands:
+      - go build
+      - go test -v
