@@ -52,22 +52,49 @@ func TestFractionalYear(t *testing.T) {
 func TestEqTime(t *testing.T) {
 
 	dates := make(map[time.Time]float64)
-	dates[time.Date(2021, 1, 1, 12, 0, 0, 0, &time.Location{})] = -229
-	dates[time.Date(2021, 2, 1, 12, 0, 0, 0, &time.Location{})] = -820
-	dates[time.Date(2021, 3, 1, 12, 0, 0, 0, &time.Location{})] = -733
-	dates[time.Date(2021, 4, 1, 12, 0, 0, 0, &time.Location{})] = -221
+	dates[time.Date(2021, 1, 1, 12, 0, 0, 0, &time.Location{})] = -228
+	dates[time.Date(2021, 2, 1, 12, 0, 0, 0, &time.Location{})] = -819
+	dates[time.Date(2021, 3, 1, 12, 0, 0, 0, &time.Location{})] = -734
+	dates[time.Date(2021, 4, 1, 12, 0, 0, 0, &time.Location{})] = -223
 	dates[time.Date(2021, 5, 1, 12, 0, 0, 0, &time.Location{})] = 177
-	dates[time.Date(2021, 6, 1, 12, 0, 0, 0, &time.Location{})] = 124
-	dates[time.Date(2021, 7, 1, 12, 0, 0, 0, &time.Location{})] = -239
+	dates[time.Date(2021, 6, 1, 12, 0, 0, 0, &time.Location{})] = 125
+	dates[time.Date(2021, 7, 1, 12, 0, 0, 0, &time.Location{})] = -238
 	dates[time.Date(2021, 8, 1, 12, 0, 0, 0, &time.Location{})] = -379
-	dates[time.Date(2021, 9, 1, 12, 0, 0, 0, &time.Location{})] = 8
-	dates[time.Date(2021, 10, 1, 12, 0, 0, 0, &time.Location{})] = 629
+	dates[time.Date(2021, 9, 1, 12, 0, 0, 0, &time.Location{})] = 6
+	dates[time.Date(2021, 10, 1, 12, 0, 0, 0, &time.Location{})] = 628
 	dates[time.Date(2021, 11, 1, 12, 0, 0, 0, &time.Location{})] = 988
-	dates[time.Date(2021, 12, 1, 12, 0, 0, 0, &time.Location{})] = 646
+	dates[time.Date(2021, 12, 1, 12, 0, 0, 0, &time.Location{})] = 647
 
 	for k, v := range dates {
 		got := eqTime(k) * 60
-		if math.Abs(got-v) > 8 {
+		if math.Abs(got-v) > 10 {
+			t.Errorf("eqTime(%v) = %f, expected %f, diff %f", k, got, v, math.Abs(got-v))
+		} else {
+			t.Logf("eqTime(%v) = %f, expected %f, diff %f", k, got, v, math.Abs(got-v))
+		}
+	}
+
+}
+
+func TestDecl(t *testing.T) {
+
+	dates := make(map[time.Time]float64)
+	dates[time.Date(2021, 1, 1, 12, 0, 0, 0, &time.Location{})] = -22.94
+	dates[time.Date(2021, 2, 1, 12, 0, 0, 0, &time.Location{})] = -16.88
+	dates[time.Date(2021, 3, 1, 12, 0, 0, 0, &time.Location{})] = -7.3
+	dates[time.Date(2021, 4, 1, 12, 0, 0, 0, &time.Location{})] = 4.82
+	dates[time.Date(2021, 5, 1, 12, 0, 0, 0, &time.Location{})] = 15.29
+	dates[time.Date(2021, 6, 1, 12, 0, 0, 0, &time.Location{})] = 22.15
+	dates[time.Date(2021, 7, 1, 12, 0, 0, 0, &time.Location{})] = 23.06
+	dates[time.Date(2021, 8, 1, 12, 0, 0, 0, &time.Location{})] = 17.83
+	dates[time.Date(2021, 9, 1, 12, 0, 0, 0, &time.Location{})] = 8.02
+	dates[time.Date(2021, 10, 1, 12, 0, 0, 0, &time.Location{})] = -3.46
+	dates[time.Date(2021, 11, 1, 12, 0, 0, 0, &time.Location{})] = -14.65
+	dates[time.Date(2021, 12, 1, 12, 0, 0, 0, &time.Location{})] = -21.91
+
+	for k, v := range dates {
+		got := toDegrees(decl(k))
+		if math.Abs(got-v) > 0.5 {
 			t.Errorf("eqTime(%v) = %f, expected %f, diff %f", k, got, v, math.Abs(got-v))
 		} else {
 			t.Logf("eqTime(%v) = %f, expected %f, diff %f", k, got, v, math.Abs(got-v))
