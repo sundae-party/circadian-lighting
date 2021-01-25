@@ -92,7 +92,42 @@ func solarNoonElevation(date time.Time, latitude float64, longitude float64) flo
 	return elevation(dateNoon, latitude, longitude)
 }
 
-//TODO add azimuth func
+func azimuth(date time.Time, latitude float64, longitude float64) float64 {
+	dateSeconds := date.Hour()*60 + date.Minute() + date.Second()/60
+	midnight := solarMidnight(date, longitude)
+	noon := solarNoon(date, longitude)
+	midnight0 := midnight > 0
+	noon1440 := noon < 1440
+	beforeMidnight := (dateSeconds - int(midnight)%1440) < 0
+	beforeNoon := (dateSeconds - int(noon)%1440) < 0
+	var azimuth float64
+	if midnight0 && noon1440 {
+		if beforeMidnight && beforeNoon {
+			azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+		} else if !beforeMidnight && beforeNoon {
+			azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+		} else if !beforeMidnight && !beforeNoon {
+			azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+		}
+	} else if !midnight0 && noon1440 {
+		if beforeMidnight && beforeNoon {
+			azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+		} else if beforeMidnight && !beforeNoon {
+			azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+		} else if !beforeMidnight && !beforeNoon {
+			azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+		}
+	} else if midnight0 && !noon1440 {
+		if beforeMidnight && beforeNoon {
+			azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+		} else if beforeMidnight && !beforeNoon {
+			azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+		} else if !beforeMidnight && !beforeNoon {
+			azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+		}
+	}
+	return azimuth
+}
 
 func solarMidnightElevation(date time.Time, latitude float64, longitude float64) float64 {
 	noon := solarMidnight(date, longitude)
@@ -147,7 +182,7 @@ func brightness(date time.Time, latitude float64, longitude float64) int64 {
 }
 
 func main() {
-	date := time.Date(2021, 1, 17, 17, 44, 0, 0, &time.Location{})
+	date := time.Now()
 	latitude := 43.575997
 	longitude := 1.480259
 
@@ -169,9 +204,25 @@ func main() {
 	iSecond, _ = math.Modf(fMinute * 60)
 	dateSunset := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, &time.Location{})
 
+	d = solarMidnight(date, longitude)
+	iHour, fHour = math.Modf(d / 60)
+	iMinute, fMinute = math.Modf(fHour * 60)
+	iSecond, _ = math.Modf(fMinute * 60)
+	dateMidnight := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, &time.Location{})
+
+	fmt.Printf("Solar midnight: %v\n", dateMidnight)
 	fmt.Printf("Sunrise: %v\n", dateSunrise)
 	fmt.Printf("Solar noon: %v\n", dateNoon)
 	fmt.Printf("Sunset: %v\n", dateSunset)
-	fmt.Printf("Circadian color temperature: %d kelvin and brightness %d%%\n", colorTemp(date, latitude, longitude), brightness(date, latitude, longitude))
+
+	fmt.Printf("Sun position at midnight: (%f,%f)\n", toDegrees(azimuth(dateMidnight, latitude, longitude)), toDegrees(elevation(dateMidnight, latitude, longitude)))
+	fmt.Printf("Sun position at sunrise: (%f,%f)\n", toDegrees(azimuth(dateSunrise, latitude, longitude)), toDegrees(elevation(dateSunrise, latitude, longitude)))
+	fmt.Printf("Sun position at noon: (%f,%f)\n", toDegrees(azimuth(dateNoon, latitude, longitude)), toDegrees(elevation(dateNoon, latitude, longitude)))
+	fmt.Printf("Sun position at sunset: (%f,%f)\n", toDegrees(azimuth(dateSunset, latitude, longitude)), toDegrees(elevation(dateSunset, latitude, longitude)))
+
+	fmt.Printf("Circadian color temperature at midnight: %d kelvin and brightness %d%%\n", colorTemp(dateMidnight, latitude, longitude), brightness(dateMidnight, latitude, longitude))
+	fmt.Printf("Circadian color temperature at sunrise: %d kelvin and brightness %d%%\n", colorTemp(dateSunrise, latitude, longitude), brightness(dateSunrise, latitude, longitude))
+	fmt.Printf("Circadian color temperature at noon: %d kelvin and brightness %d%%\n", colorTemp(dateNoon, latitude, longitude), brightness(dateNoon, latitude, longitude))
+	fmt.Printf("Circadian color temperature at sunset: %d kelvin and brightness %d%%\n", colorTemp(dateSunset, latitude, longitude), brightness(dateSunset, latitude, longitude))
 
 }
