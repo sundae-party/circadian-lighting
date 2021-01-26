@@ -68,39 +68,56 @@ func hASunset(date time.Time, latitude float64) float64 {
 	return toDegrees(math.Acos(math.Cos(toRadians(90.833))/(math.Cos(toRadians(latitude))*math.Cos(decl(date))) - (math.Tan(toRadians(latitude)) * math.Tan(decl(date)))))
 }
 
-func sunrise(date time.Time, latitude float64, longitude float64) float64 {
+func sunrise(date time.Time, latitude float64, longitude float64) time.Time {
 	var _, offset = date.Zone()
-	return 720 - 4*(longitude-hASunrise(date, latitude)) - eqTime(date) + math.Round(float64(offset)/60)
+	sunrise := 720 - 4*(longitude-hASunrise(date, latitude)) - eqTime(date) + math.Round(float64(offset)/60)
+	iHour, fHour := math.Modf(sunrise / 60)
+	iMinute, fMinute := math.Modf(fHour * 60)
+	iSecond, _ := math.Modf(fMinute * 60)
+	return time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Location())
+
 }
 
-func sunset(date time.Time, latitude float64, longitude float64) float64 {
+func sunset(date time.Time, latitude float64, longitude float64) time.Time {
 	var _, offset = date.Zone()
-	return 720 - 4*(longitude-hASunset(date, latitude)) - eqTime(date) + math.Round(float64(offset)/60)
+	sunset := 720 - 4*(longitude-hASunset(date, latitude)) - eqTime(date) + math.Round(float64(offset)/60)
+	iHour, fHour := math.Modf(sunset / 60)
+	iMinute, fMinute := math.Modf(fHour * 60)
+	iSecond, _ := math.Modf(fMinute * 60)
+	return time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Location())
 }
 
-func solarNoon(date time.Time, longitude float64) float64 {
+func solarNoon(date time.Time, longitude float64) time.Time {
 	var _, offset = date.Zone()
-	return 720 - 4*longitude - eqTime(date) + math.Round(float64(offset)/60)
-}
-
-func solarMidnight(date time.Time, longitude float64) float64 {
-	var _, offset = date.Zone()
-	return -4*longitude - eqTime(date) + math.Round(float64(offset)/60)
-}
-
-func solarNoonElevation(date time.Time, latitude float64, longitude float64) float64 {
-	noon := solarNoon(date, longitude)
+	noon := 720 - 4*longitude - eqTime(date) + math.Round(float64(offset)/60)
 	iHour, fHour := math.Modf(noon / 60)
 	iMinute, fMinute := math.Modf(fHour * 60)
 	iSecond, _ := math.Modf(fMinute * 60)
-	dateNoon := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
-	return elevation(dateNoon, latitude, longitude)
+	return time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Location())
+}
+
+func solarMidnight(date time.Time, longitude float64) time.Time {
+	var _, offset = date.Zone()
+	midnight := -4*longitude - eqTime(date) + math.Round(float64(offset)/60)
+	iHour, fHour := math.Modf(midnight / 60)
+	iMinute, fMinute := math.Modf(fHour * 60)
+	iSecond, _ := math.Modf(fMinute * 60)
+	return time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Location())
+
+}
+
+func solarNoonElevation(date time.Time, latitude float64, longitude float64) float64 {
+	return elevation(solarNoon(date, longitude), latitude, longitude)
+}
+
+func solarMidnightElevation(date time.Time, latitude float64, longitude float64) float64 {
+	return elevation(solarMidnight(date, longitude), latitude, longitude)
 }
 
 func azimuth(date time.Time, latitude float64, longitude float64) float64 {
 	// dateSeconds := date.Hour()*60 + date.Minute() + date.Second()/60
-	// midnight := solarMidnight(date, longitude)
-	// noon := solarNoon(date, longitude)
+	midnight := solarMidnight(date, longitude)
+	noon := solarNoon(date, longitude)
 	// midnight0 := midnight > 0
 	// noon1440 := noon < 1440
 	// beforeMidnight := (dateSeconds - int(midnight)%1440) < 0
@@ -131,17 +148,15 @@ func azimuth(date time.Time, latitude float64, longitude float64) float64 {
 	// 		azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
 	// 	}
 	// }
-	return -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+	// fmt.Printf("	midnight %v\n", midnight)
+	// fmt.Printf("	noon %v\n", noon)
+	// fmt.Printf("	date %v\n", date)
+	if date.After(midnight) && date.Before(noon) {
+		return math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+	} else {
+		return -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+	}
 
-}
-
-func solarMidnightElevation(date time.Time, latitude float64, longitude float64) float64 {
-	noon := solarMidnight(date, longitude)
-	iHour, fHour := math.Modf(noon / 60)
-	iMinute, fMinute := math.Modf(fHour * 60)
-	iSecond, _ := math.Modf(fMinute * 60)
-	dateNoon := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
-	return elevation(dateNoon, latitude, longitude)
 }
 
 func percentageElevationDay(date time.Time, latitude float64, longitude float64) float64 {
@@ -192,29 +207,10 @@ func main() {
 	latitude := 48.87
 	longitude := 2.67
 
-	d := sunrise(date, latitude, longitude)
-	iHour, fHour := math.Modf(d / 60)
-	iMinute, fMinute := math.Modf(fHour * 60)
-	iSecond, _ := math.Modf(fMinute * 60)
-	dateSunrise := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
-
-	d = solarNoon(date, longitude)
-	iHour, fHour = math.Modf(d / 60)
-	iMinute, fMinute = math.Modf(fHour * 60)
-	iSecond, _ = math.Modf(fMinute * 60)
-	dateNoon := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
-
-	d = sunset(date, latitude, longitude)
-	iHour, fHour = math.Modf(d / 60)
-	iMinute, fMinute = math.Modf(fHour * 60)
-	iSecond, _ = math.Modf(fMinute * 60)
-	dateSunset := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
-
-	d = solarMidnight(date, longitude)
-	iHour, fHour = math.Modf(d / 60)
-	iMinute, fMinute = math.Modf(fHour * 60)
-	iSecond, _ = math.Modf(fMinute * 60)
-	dateMidnight := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
+	dateSunrise := sunrise(date, latitude, longitude)
+	dateNoon := solarNoon(date, longitude)
+	dateSunset := sunset(date, latitude, longitude)
+	dateMidnight := solarMidnight(date, longitude)
 
 	fmt.Printf("Solar midnight: %v\n", dateMidnight)
 	fmt.Printf("Sunrise: %v\n", dateSunrise)
@@ -230,5 +226,12 @@ func main() {
 	fmt.Printf("Circadian color temperature at sunrise: %d kelvin and brightness %d%%\n", colorTemp(dateSunrise, latitude, longitude), brightness(dateSunrise, latitude, longitude))
 	fmt.Printf("Circadian color temperature at noon: %d kelvin and brightness %d%%\n", colorTemp(dateNoon, latitude, longitude), brightness(dateNoon, latitude, longitude))
 	fmt.Printf("Circadian color temperature at sunset: %d kelvin and brightness %d%%\n", colorTemp(dateSunset, latitude, longitude), brightness(dateSunset, latitude, longitude))
+
+	for h := 0; h < 24; h++ {
+		for m := 0; m < 60; m = m + 10 {
+			d := time.Date(2021, 1, 1, h, m, 0, 0, time.Now().UTC().Location())
+			fmt.Printf("%v : %f\n", d, toDegrees(azimuth(d, latitude, longitude)))
+		}
+	}
 
 }
