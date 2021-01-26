@@ -11,10 +11,11 @@ func isLeapYear(date time.Time) bool {
 }
 
 func fractionalYear(date time.Time) float64 {
+	dateUTC := date.UTC()
 	if isLeapYear(date) {
-		return (2 * math.Pi * (float64(date.YearDay()) - 1 + float64(date.Hour())/24 + float64(date.Minute())/(24*60) + float64(date.Second())/(24*60*60)) / 366)
+		return (2 * math.Pi * (float64(dateUTC.YearDay()) - 1 + float64(dateUTC.Hour())/24 + float64(dateUTC.Minute())/(24*60) + float64(dateUTC.Second())/(24*60*60)) / 366)
 	} else {
-		return (2 * math.Pi * (float64(date.YearDay()) - 1 + float64(date.Hour())/24 + float64(date.Minute())/(24*60) + float64(date.Second())/(24*60*60)) / 365)
+		return (2 * math.Pi * (float64(dateUTC.YearDay()) - 1 + float64(dateUTC.Hour())/24 + float64(dateUTC.Minute())/(24*60) + float64(dateUTC.Second())/(24*60*60)) / 365)
 	}
 }
 
@@ -31,7 +32,7 @@ func decl(date time.Time) float64 {
 }
 
 func timeOffset(date time.Time, longitude float64) float64 {
-	var _, offset = time.Now().Zone()
+	var _, offset = date.Zone()
 	return eqTime(date) + 4*longitude - math.Round(float64(offset)/60)
 }
 
@@ -68,22 +69,22 @@ func hASunset(date time.Time, latitude float64) float64 {
 }
 
 func sunrise(date time.Time, latitude float64, longitude float64) float64 {
-	var _, offset = time.Now().Zone()
+	var _, offset = date.Zone()
 	return 720 - 4*(longitude-hASunrise(date, latitude)) - eqTime(date) + math.Round(float64(offset)/60)
 }
 
 func sunset(date time.Time, latitude float64, longitude float64) float64 {
-	var _, offset = time.Now().Zone()
+	var _, offset = date.Zone()
 	return 720 - 4*(longitude-hASunset(date, latitude)) - eqTime(date) + math.Round(float64(offset)/60)
 }
 
 func solarNoon(date time.Time, longitude float64) float64 {
-	var _, offset = time.Now().Zone()
+	var _, offset = date.Zone()
 	return 720 - 4*longitude - eqTime(date) + math.Round(float64(offset)/60)
 }
 
 func solarMidnight(date time.Time, longitude float64) float64 {
-	var _, offset = time.Now().Zone()
+	var _, offset = date.Zone()
 	return -4*longitude - eqTime(date) + math.Round(float64(offset)/60)
 }
 
@@ -92,45 +93,46 @@ func solarNoonElevation(date time.Time, latitude float64, longitude float64) flo
 	iHour, fHour := math.Modf(noon / 60)
 	iMinute, fMinute := math.Modf(fHour * 60)
 	iSecond, _ := math.Modf(fMinute * 60)
-	dateNoon := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, &time.Location{})
+	dateNoon := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
 	return elevation(dateNoon, latitude, longitude)
 }
 
 func azimuth(date time.Time, latitude float64, longitude float64) float64 {
-	dateSeconds := date.Hour()*60 + date.Minute() + date.Second()/60
-	midnight := solarMidnight(date, longitude)
-	noon := solarNoon(date, longitude)
-	midnight0 := midnight > 0
-	noon1440 := noon < 1440
-	beforeMidnight := (dateSeconds - int(midnight)%1440) < 0
-	beforeNoon := (dateSeconds - int(noon)%1440) < 0
-	var azimuth float64
-	if midnight0 && noon1440 {
-		if beforeMidnight && beforeNoon {
-			azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
-		} else if !beforeMidnight && beforeNoon {
-			azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
-		} else if !beforeMidnight && !beforeNoon {
-			azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
-		}
-	} else if !midnight0 && noon1440 {
-		if beforeMidnight && beforeNoon {
-			azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
-		} else if beforeMidnight && !beforeNoon {
-			azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
-		} else if !beforeMidnight && !beforeNoon {
-			azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
-		}
-	} else if midnight0 && !noon1440 {
-		if beforeMidnight && beforeNoon {
-			azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
-		} else if beforeMidnight && !beforeNoon {
-			azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
-		} else if !beforeMidnight && !beforeNoon {
-			azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
-		}
-	}
-	return azimuth
+	// dateSeconds := date.Hour()*60 + date.Minute() + date.Second()/60
+	// midnight := solarMidnight(date, longitude)
+	// noon := solarNoon(date, longitude)
+	// midnight0 := midnight > 0
+	// noon1440 := noon < 1440
+	// beforeMidnight := (dateSeconds - int(midnight)%1440) < 0
+	// beforeNoon := (dateSeconds - int(noon)%1440) < 0
+	// var azimuth float64
+	// if midnight0 && noon1440 {
+	// 	if beforeMidnight && beforeNoon {
+	// 		azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+	// 	} else if !beforeMidnight && beforeNoon {
+	// 		azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+	// 	} else if !beforeMidnight && !beforeNoon {
+	// 		azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+	// 	}
+	// } else if !midnight0 && noon1440 {
+	// 	if beforeMidnight && beforeNoon {
+	// 		azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+	// 	} else if beforeMidnight && !beforeNoon {
+	// 		azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+	// 	} else if !beforeMidnight && !beforeNoon {
+	// 		azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+	// 	}
+	// } else if midnight0 && !noon1440 {
+	// 	if beforeMidnight && beforeNoon {
+	// 		azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+	// 	} else if beforeMidnight && !beforeNoon {
+	// 		azimuth = -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+	// 	} else if !beforeMidnight && !beforeNoon {
+	// 		azimuth = math.Acos((math.Sin(decl(date)) - math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude))) / (math.Cos(toRadians(latitude)) * math.Sin(zenith(date, latitude, longitude))))
+	// 	}
+	// }
+	return -math.Acos((math.Sin(decl(date))-math.Sin(toRadians(latitude))*math.Cos(zenith(date, latitude, longitude)))/(math.Cos(toRadians(latitude))*math.Sin(zenith(date, latitude, longitude)))) + 2*math.Pi
+
 }
 
 func solarMidnightElevation(date time.Time, latitude float64, longitude float64) float64 {
@@ -138,7 +140,7 @@ func solarMidnightElevation(date time.Time, latitude float64, longitude float64)
 	iHour, fHour := math.Modf(noon / 60)
 	iMinute, fMinute := math.Modf(fHour * 60)
 	iSecond, _ := math.Modf(fMinute * 60)
-	dateNoon := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, &time.Location{})
+	dateNoon := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
 	return elevation(dateNoon, latitude, longitude)
 }
 
@@ -187,32 +189,32 @@ func brightness(date time.Time, latitude float64, longitude float64) int64 {
 
 func main() {
 	date := time.Now()
-	latitude := 43.575997
-	longitude := 1.480259
+	latitude := 48.87
+	longitude := 2.67
 
 	d := sunrise(date, latitude, longitude)
 	iHour, fHour := math.Modf(d / 60)
 	iMinute, fMinute := math.Modf(fHour * 60)
 	iSecond, _ := math.Modf(fMinute * 60)
-	dateSunrise := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, &time.Location{})
+	dateSunrise := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
 
 	d = solarNoon(date, longitude)
 	iHour, fHour = math.Modf(d / 60)
 	iMinute, fMinute = math.Modf(fHour * 60)
 	iSecond, _ = math.Modf(fMinute * 60)
-	dateNoon := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, &time.Location{})
+	dateNoon := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
 
 	d = sunset(date, latitude, longitude)
 	iHour, fHour = math.Modf(d / 60)
 	iMinute, fMinute = math.Modf(fHour * 60)
 	iSecond, _ = math.Modf(fMinute * 60)
-	dateSunset := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, &time.Location{})
+	dateSunset := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
 
 	d = solarMidnight(date, longitude)
 	iHour, fHour = math.Modf(d / 60)
 	iMinute, fMinute = math.Modf(fHour * 60)
 	iSecond, _ = math.Modf(fMinute * 60)
-	dateMidnight := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, &time.Location{})
+	dateMidnight := time.Date(date.Year(), date.Month(), date.Day(), int(iHour), int(iMinute), int(iSecond), 0, date.Local().Location())
 
 	fmt.Printf("Solar midnight: %v\n", dateMidnight)
 	fmt.Printf("Sunrise: %v\n", dateSunrise)
