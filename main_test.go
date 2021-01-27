@@ -133,7 +133,7 @@ func TestElevation(t *testing.T) {
 
 }
 
-func TestAzimuth(t *testing.T) {
+func TestAzimuthParisUTC(t *testing.T) {
 
 	// Paris UTC
 	latitude := 48.87
@@ -160,22 +160,24 @@ func TestAzimuth(t *testing.T) {
 			t.Logf("azimuth(%v) = %f, expected %f, diff %f", k, got, v, math.Abs(got-v))
 		}
 	}
+}
+
+func TestAzimuthTongatapuUTC(t *testing.T) {
 
 	// Tongatapu UTC
-	latitude = -21.133
-	longitude = -175.217
-	dates[time.Date(2021, 1, 1, 6, 0, 0, 0, time.UTC)] = 115.37
-	dates[time.Date(2021, 1, 1, 7, 0, 0, 0, time.UTC)] = 110.42
-	dates[time.Date(2021, 1, 1, 8, 0, 0, 0, time.UTC)] = 128.46
-	dates[time.Date(2021, 1, 1, 9, 0, 0, 0, time.UTC)] = 140.38
-	dates[time.Date(2021, 1, 1, 10, 0, 0, 0, time.UTC)] = 153.34
-	dates[time.Date(2021, 1, 1, 11, 0, 0, 0, time.UTC)] = 167.24
-	dates[time.Date(2021, 1, 1, 12, 0, 0, 0, time.UTC)] = 181.7
-	dates[time.Date(2021, 1, 1, 13, 0, 0, 0, time.UTC)] = 196.08
-	dates[time.Date(2021, 1, 1, 14, 0, 0, 0, time.UTC)] = 209.79
-	dates[time.Date(2021, 1, 1, 15, 0, 0, 0, time.UTC)] = 222.5
-	dates[time.Date(2021, 1, 1, 16, 0, 0, 0, time.UTC)] = 234.2
-	dates[time.Date(2021, 1, 1, 17, 0, 0, 0, time.UTC)] = 245.12
+	latitude := -21.133
+	longitude := -175.217
+	dates := make(map[time.Time]float64)
+	dates[time.Date(2021, 1, 1, 6, 0, 0, 0, time.UTC)] = 247.17
+	dates[time.Date(2021, 1, 1, 7, 0, 0, 0, time.UTC)] = 241.57
+	dates[time.Date(2021, 1, 1, 16, 0, 0, 0, time.UTC)] = 121.67
+	dates[time.Date(2021, 1, 1, 17, 0, 0, 0, time.UTC)] = 115.34
+	dates[time.Date(2021, 1, 1, 18, 0, 0, 0, time.UTC)] = 110.38
+	dates[time.Date(2021, 1, 1, 19, 0, 0, 0, time.UTC)] = 106.38
+	dates[time.Date(2021, 1, 1, 20, 0, 0, 0, time.UTC)] = 103.13
+	dates[time.Date(2021, 1, 1, 21, 0, 0, 0, time.UTC)] = 100.59
+	dates[time.Date(2021, 1, 1, 22, 0, 0, 0, time.UTC)] = 99.12
+	dates[time.Date(2021, 1, 1, 23, 0, 0, 0, time.UTC)] = 101.83
 
 	for k, v := range dates {
 		got := toDegrees(azimuth(k, latitude, longitude))
@@ -186,4 +188,33 @@ func TestAzimuth(t *testing.T) {
 		}
 	}
 
+}
+
+func TestAzimuthAucklandUTC(t *testing.T) {
+
+	// Auckland UTC
+	latitude := -36.847
+	longitude := 174.77
+	dates := make(map[time.Time]float64)
+	dates[time.Date(2021, 1, 1, 6, 0, 0, 0, time.UTC)] = 254.52
+	dates[time.Date(2021, 1, 1, 7, 0, 0, 0, time.UTC)] = 246.39
+	dates[time.Date(2021, 1, 1, 8, 0, 0, 0, time.UTC)] = 237.53
+	dates[time.Date(2021, 1, 1, 9, 0, 0, 0, time.UTC)] = 227.42
+	dates[time.Date(2021, 1, 1, 16, 0, 0, 0, time.UTC)] = 130.63
+	dates[time.Date(2021, 1, 1, 17, 0, 0, 0, time.UTC)] = 120.77
+	dates[time.Date(2021, 1, 1, 18, 0, 0, 0, time.UTC)] = 112.07
+	dates[time.Date(2021, 1, 1, 19, 0, 0, 0, time.UTC)] = 104.01
+	dates[time.Date(2021, 1, 1, 20, 0, 0, 0, time.UTC)] = 96.01
+	dates[time.Date(2021, 1, 1, 21, 0, 0, 0, time.UTC)] = 87.25
+	dates[time.Date(2021, 1, 1, 22, 0, 0, 0, time.UTC)] = 76.15
+	dates[time.Date(2021, 1, 1, 23, 0, 0, 0, time.UTC)] = 58.6
+
+	for k, v := range dates {
+		got := toDegrees(azimuth(k, latitude, longitude))
+		if math.Abs(got-v) > 0.5 {
+			t.Errorf("azimuth(%v) = %f, expected %f, diff %f", k, got, v, math.Abs(got-v))
+		} else {
+			t.Logf("azimuth(%v) = %f, expected %f, diff %f", k, got, v, math.Abs(got-v))
+		}
+	}
 }
