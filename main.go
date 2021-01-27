@@ -19,10 +19,12 @@ func fractionalYear(date time.Time) float64 {
 	}
 }
 
+// TODO
 func eqTime(date time.Time) float64 {
 	return 0.0116 - 7.3453*math.Sin(fractionalYear(date)+6.229) - 9.9212*math.Sin(2*fractionalYear(date)+0.3877) - 0.3363*math.Sin(3*fractionalYear(date)+0.342) - 0.2316*math.Sin(4*fractionalYear(date)+0.7531)
 }
 
+// TODO
 func decl(date time.Time) float64 {
 	return 0.006918 - 0.399912*math.Cos(fractionalYear(date)) + 0.070257*math.Sin(fractionalYear(date)) - 0.006758*math.Cos(2*fractionalYear(date)) + 0.000907*math.Sin(2*fractionalYear(date)) - 0.002697*math.Cos(3*fractionalYear(date)) + 0.00148*math.Sin(3*fractionalYear(date))
 }
