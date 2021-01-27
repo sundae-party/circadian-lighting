@@ -161,4 +161,29 @@ func TestAzimuth(t *testing.T) {
 		}
 	}
 
+	// Tongatapu UTC
+	latitude = -21.133
+	longitude = -175.217
+	dates[time.Date(2021, 1, 1, 6, 0, 0, 0, time.UTC)] = 115.37
+	dates[time.Date(2021, 1, 1, 7, 0, 0, 0, time.UTC)] = 110.42
+	dates[time.Date(2021, 1, 1, 8, 0, 0, 0, time.UTC)] = 128.46
+	dates[time.Date(2021, 1, 1, 9, 0, 0, 0, time.UTC)] = 140.38
+	dates[time.Date(2021, 1, 1, 10, 0, 0, 0, time.UTC)] = 153.34
+	dates[time.Date(2021, 1, 1, 11, 0, 0, 0, time.UTC)] = 167.24
+	dates[time.Date(2021, 1, 1, 12, 0, 0, 0, time.UTC)] = 181.7
+	dates[time.Date(2021, 1, 1, 13, 0, 0, 0, time.UTC)] = 196.08
+	dates[time.Date(2021, 1, 1, 14, 0, 0, 0, time.UTC)] = 209.79
+	dates[time.Date(2021, 1, 1, 15, 0, 0, 0, time.UTC)] = 222.5
+	dates[time.Date(2021, 1, 1, 16, 0, 0, 0, time.UTC)] = 234.2
+	dates[time.Date(2021, 1, 1, 17, 0, 0, 0, time.UTC)] = 245.12
+
+	for k, v := range dates {
+		got := toDegrees(azimuth(k, latitude, longitude))
+		if math.Abs(got-v) > 0.5 {
+			t.Errorf("azimuth(%v) = %f, expected %f, diff %f", k, got, v, math.Abs(got-v))
+		} else {
+			t.Logf("azimuth(%v) = %f, expected %f, diff %f", k, got, v, math.Abs(got-v))
+		}
+	}
+
 }

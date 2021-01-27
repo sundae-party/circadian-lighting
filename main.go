@@ -204,8 +204,8 @@ func brightness(date time.Time, latitude float64, longitude float64) int64 {
 
 func main() {
 	date := time.Now()
-	latitude := 48.87
-	longitude := 2.67
+	latitude := -21.133
+	longitude := -175.217
 
 	dateSunrise := sunrise(date, latitude, longitude)
 	dateNoon := solarNoon(date, longitude)
@@ -229,7 +229,7 @@ func main() {
 
 	for h := 0; h < 24; h++ {
 		for m := 0; m < 60; m = m + 10 {
-			d := time.Date(2021, 1, 1, h, m, 0, 0, time.Now().UTC().Location())
+			d := time.Date(2021, 1, 1, h, m, 0, 0, time.Now().Location())
 			fmt.Printf("%v : %f\n", d, toDegrees(azimuth(d, latitude, longitude)))
 		}
 	}
