@@ -169,7 +169,7 @@ func percentageElevationNauticalTwilight(date time.Time, latitude float64, longi
 	return (actualElevation - minElevation) / (maxElevation - minElevation)
 }
 
-func colorTemp(date time.Time, latitude float64, longitude float64) int64 {
+func ColorTemp(date time.Time, latitude float64, longitude float64) int64 {
 	actualElevation := toDegrees(elevation(date, latitude, longitude))
 	if actualElevation > -0.833 {
 		return int64(math.Round(percentageElevationDay(date, latitude, longitude)*2500 + 3000))
@@ -180,7 +180,7 @@ func colorTemp(date time.Time, latitude float64, longitude float64) int64 {
 	}
 }
 
-func brightness(date time.Time, latitude float64, longitude float64) int64 {
+func Brightness(date time.Time, latitude float64, longitude float64) int64 {
 	actualElevation := toDegrees(elevation(date, latitude, longitude))
 	if actualElevation > -6 {
 		return 100
@@ -212,10 +212,10 @@ func main() {
 	fmt.Printf("Sun position at noon: (%f,%f)\n", toDegrees(azimuth(dateNoon, latitude, longitude)), toDegrees(elevation(dateNoon, latitude, longitude)))
 	fmt.Printf("Sun position at sunset: (%f,%f)\n", toDegrees(azimuth(dateSunset, latitude, longitude)), toDegrees(elevation(dateSunset, latitude, longitude)))
 
-	fmt.Printf("Circadian color temperature at midnight: %d kelvin and brightness %d%%\n", colorTemp(dateMidnight, latitude, longitude), brightness(dateMidnight, latitude, longitude))
-	fmt.Printf("Circadian color temperature at sunrise: %d kelvin and brightness %d%%\n", colorTemp(dateSunrise, latitude, longitude), brightness(dateSunrise, latitude, longitude))
-	fmt.Printf("Circadian color temperature at noon: %d kelvin and brightness %d%%\n", colorTemp(dateNoon, latitude, longitude), brightness(dateNoon, latitude, longitude))
-	fmt.Printf("Circadian color temperature at sunset: %d kelvin and brightness %d%%\n", colorTemp(dateSunset, latitude, longitude), brightness(dateSunset, latitude, longitude))
+	fmt.Printf("Circadian color temperature at midnight: %d kelvin and brightness %d%%\n", ColorTemp(dateMidnight, latitude, longitude), Brightness(dateMidnight, latitude, longitude))
+	fmt.Printf("Circadian color temperature at sunrise: %d kelvin and brightness %d%%\n", ColorTemp(dateSunrise, latitude, longitude), Brightness(dateSunrise, latitude, longitude))
+	fmt.Printf("Circadian color temperature at noon: %d kelvin and brightness %d%%\n", ColorTemp(dateNoon, latitude, longitude), Brightness(dateNoon, latitude, longitude))
+	fmt.Printf("Circadian color temperature at sunset: %d kelvin and brightness %d%%\n", ColorTemp(dateSunset, latitude, longitude), Brightness(dateSunset, latitude, longitude))
 
 	for h := 0; h < 24; h++ {
 		for m := 0; m < 60; m = m + 10 {
