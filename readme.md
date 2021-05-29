@@ -1,6 +1,8 @@
 # Circadian lighting
 
 [![Build Status](https://sundae-drone.connan.pro/api/badges/sundae-party/circadian-lighting/status.svg)](https://sundae-drone.connan.pro/sundae-party/circadian-lighting)
+![codeql-analysis](https://github.com/sundae-party/circadian-lighting/actions/workflows/codeql-analysis.yml/badge.svg)
+
 
 The circadian lighting package brings several features that help to mimick the Sun light with connected lights.
 
